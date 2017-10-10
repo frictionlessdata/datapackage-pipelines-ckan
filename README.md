@@ -17,3 +17,11 @@
 git clone https://github.com/frictionlessdata/datapackage-pipelines-ckan.git
 pip install -e .
 ```
+
+
+CKAN_API_KEY env var
+
+add_ckan_resource processor
+- ckan-host: include schema (http://demo.ckan.org)
+- ckan-api-key: (optional for private datasets) either the api key, or `env:CKAN_API_KEY_NAME` if defined in env var.
+- resource-id: id of ckan resource

@@ -1,0 +1,26 @@
+example-add-ckan-resource:
+  title: Example pipeline using add_ckan_resource processor
+  description: This example pipeline makes use of the add_ckan_resource processor
+  pipeline:
+    -
+      run: add_metadata
+      parameters:
+        name: example-add-ckan-resource
+        title: 'Example add_ckan_resource pipeline'
+
+    -
+      run: ckan.add_ckan_resource
+      parameters:
+        ckan-host: http://demo.ckan.org
+        resource-id: d51c9bd4-8256-4289-bdd7-962f8572efb0
+        # ckan-api-key: env:CKAN_API_KEY
+        headers: 3  # passed to tabulator.Stream
+
+    -
+      run: stream_remote_resources
+      cache: True
+
+    -
+      run: dump.to_path
+      parameters:
+        out-path: ../output/example

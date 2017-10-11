@@ -17,3 +17,24 @@
 git clone https://github.com/frictionlessdata/datapackage-pipelines-ckan.git
 pip install -e .
 ```
+
+
+## Usage
+
+datapackage-pipelines-ckan contains several pipeline processors for working with CKAN.
+
+### `ckan.add_ckan_resource`
+
+A processor to retrieve metadata about a CKAN resource from a CKAN instance and add it as a datapackage resource.
+
+```yaml
+  run: ckan.add_ckan_resource
+  parameters:
+    ckan-host: http://demo.ckan.org
+    resource-id: d51c9bd4-8256-4289-bdd7-962f8572efb0
+    ckan-api-key: env:CKAN_API_KEY  # an env var defining a ckan user api key
+```
+
+- `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org).
+- `resource-id`: The id of CKAN resource
+- `ckan-api-key`: Either a CKAN user api key or, if in the format `env:CKAN_API_KEY_NAME`, an env var that defines an api key. Optional, but necessary for private datasets.

@@ -11,7 +11,7 @@ example-add-ckan-resource:
     -
       run: ckan.add_ckan_resource
       parameters:
-        ckan-host: http://demo.ckan.org
+        ckan-host: https://demo.ckan.org
         resource-id: d51c9bd4-8256-4289-bdd7-962f8572efb0
         # ckan-api-key: env:CKAN_API_KEY
         headers: 3  # passed to tabulator.Stream

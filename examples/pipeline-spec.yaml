@@ -23,4 +23,42 @@ example-add-ckan-resource:
     -
       run: dump.to_path
       parameters:
-        out-path: ../output/example
+        out-path: ../output/example-add-ckan-resource
+
+
+example-dump-to-package:
+  title: Example ckan.dump.to_ckan_package
+  description: This example takes the results of a pipeline, and dumps it to a CKAN instance as a new package.
+  pipeline:
+
+    - run: add_metadata
+      parameters:
+        name: my-dataset-1234
+
+    - run: add_resource
+      parameters:
+        name: example-resource
+        url: https://pkgstore.datahub.io/core/co2-ppm:co2-mm-mlo_csv/data/co2-mm-mlo_csv.csv
+
+    # -
+    #   run: stream_remote_resources
+    #   cache: True
+
+    -
+      run: dump.to_path
+      parameters:
+        out-path: ../output/example-dump-to-ckan
+
+    -
+      run: ckan.dump.to_ckan
+      parameters:
+        ckan-host: https://demo.ckan.org
+        ckan-api-key: env:CKAN_API_KEY
+        stream_resources_to_filestore: false
+        stream_resources_to_datastore: false
+        overwrite_existing: true
+        dataset-properties:
+          name: test-dataset-010203
+          state: draft
+          private: true
+          owner_org: my-test-org

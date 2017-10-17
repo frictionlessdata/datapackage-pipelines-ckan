@@ -58,5 +58,13 @@ A processor to save a datapackage and resources to a specified CKAN instance.
 
 - `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org).
 - `ckan-api-key`: Either a CKAN user api key or, if in the format `env:CKAN_API_KEY_NAME`, an env var that defines an api key.
-- `overwrite_existing`: If `true`, if the CKAN dataset already exists, it will be overwritten by the datapackage. Optional, and defaults to `false`.
+- `overwrite_existing`: If `true`, if the CKAN dataset already exists, it will be overwritten by the datapackage. Optional, and default is `false`.
 - `dataset-properties`: An optional object, the properties of which will be used to set properties of the CKAN dataset.
+
+##### CKAN dataset from datapackage
+
+The processor first creates a CKAN dataset from the datapackage specification, using the CKAN api [`package_create`](http://docs.ckan.org/en/ckan-2.6.4/api/#ckan.logic.action.create.package_create). If the dataset already exists, and parameter `overwrite_existing` is `True`, the processor will attempt to update the CKAN dataset using [`package_update`](http://docs.ckan.org/en/ckan-2.6.4/api/#ckan.logic.action.update.package_update). All existing resources and dataset properties will be overwritten.
+
+##### CKAN resources from datapackage resources
+
+If the CKAN dataset was successfully created or updated, the dataset resources will be created for each resource in the datapackage, using [`resource_create`](http://docs.ckan.org/en/ckan-2.6.4/api/#ckan.logic.action.create.resource_create). If datapackage resource are marked for streaming (they have the `dpp:streamed=True` property), resource files will be uploaded to the CKAN filestore. For example, remote resources may be marked for streaming by the inclusion of the `stream_remote_resources` processor earlier in the pipeline.

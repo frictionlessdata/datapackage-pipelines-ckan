@@ -63,6 +63,7 @@ example-dump-to-ckan:
         overwrite_existing: true
         dataset-properties:
           name: test-dataset-010203
+          title: Test Dataset
           state: draft
           private: true
           owner_org: my-test-org

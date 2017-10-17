@@ -156,9 +156,10 @@ class CkanDumper(FileDumper):
             'url': 'url',
             'url_type': 'upload',
             'name': spec['name'],
-            'hash': spec['hash'],
-            'encoding': spec['encoding']
+            'hash': spec['hash']
         }
+        if 'encoding' in spec:
+            resource_metadata.update({'encoding': spec['encoding']})
         ckan_filename = os.path.basename(spec['path'])
         resource_files = {
             'upload': (ckan_filename, open(temp_file.name, 'rb'))

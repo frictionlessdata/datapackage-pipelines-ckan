@@ -18,7 +18,8 @@ def read(*paths):
 PACKAGE = 'datapackage_pipelines_ckan'
 NAME = PACKAGE.replace('_', '-')
 INSTALL_REQUIRES = [
-    'datapackage-pipelines>=1.0,<2.0'
+    'datapackage-pipelines>=1.0,<2.0',
+    'ckan-datapackage-tools'
 ]
 TESTS_REQUIRE = [
     'pylama',

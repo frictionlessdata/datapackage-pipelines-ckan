@@ -11,7 +11,7 @@ example-add-ckan-resource:
     -
       run: ckan.add_ckan_resource
       parameters:
-        ckan-host: http://demo.ckan.org
+        ckan-host: https://demo.ckan.org
         resource-id: d51c9bd4-8256-4289-bdd7-962f8572efb0
         # ckan-api-key: env:CKAN_API_KEY
         headers: 3  # passed to tabulator.Stream
@@ -23,4 +23,47 @@ example-add-ckan-resource:
     -
       run: dump.to_path
       parameters:
-        out-path: ../output/example
+        out-path: ../output/example-add-ckan-resource
+
+
+example-dump-to-ckan:
+  title: Example ckan.dump.to_ckan
+  description: This example takes the results of a pipeline, and saves it to a CKAN instance as a dataset and resources.
+  pipeline:
+
+    - run: add_metadata
+      parameters:
+        name: my-dataset-1234
+
+    - run: add_resource
+      parameters:
+        name: co2-mm-mlo_csv_streamed
+        url: https://pkgstore.datahub.io/core/co2-ppm:co2-mm-mlo_csv/data/co2-mm-mlo_csv.csv
+
+    -
+      run: stream_remote_resources
+      cache: True
+
+    - run: add_resource
+      parameters:
+        name: co2-mm-mlo_csv_not_streamed
+        url: https://pkgstore.datahub.io/core/co2-ppm:co2-mm-mlo_csv/data/co2-mm-mlo_csv.csv
+
+    -
+      run: dump.to_path
+      parameters:
+        out-path: ../output/example-dump-to-ckan
+
+    -
+      run: ckan.dump.to_ckan
+      parameters:
+        ckan-host: https://demo.ckan.org
+        ckan-api-key: env:CKAN_API_KEY
+        push_resources_to_datastore: false
+        overwrite_existing: true
+        dataset-properties:
+          name: test-dataset-010203
+          title: Test Dataset
+          state: draft
+          private: true
+          owner_org: my-test-org

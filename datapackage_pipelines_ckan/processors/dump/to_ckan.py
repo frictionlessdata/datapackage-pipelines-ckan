@@ -80,8 +80,24 @@ class CkanDumper(FileDumper):
     def handle_datapackage(self, datapackage, parameters, stats):
         '''Create or update a ckan dataset from datapackage and parameters'''
 
+        # core dataset properties
+        dataset = {
+            'title': '',
+            'version': '',
+            'state': 'active',
+            'url': '',
+            'notes': '',
+            'license_id': '',
+            'author': '',
+            'author_email': '',
+            'maintainer': '',
+            'maintainer_email': '',
+            'owner_org': None,
+            'private': False
+        }
+
         dp = datapackage_lib.DataPackage(datapackage)
-        dataset = converter.datapackage_to_dataset(dp)
+        dataset.update(converter.datapackage_to_dataset(dp))
 
         self.dataset_resources = dataset.get('resources', [])
         if self.dataset_resources:

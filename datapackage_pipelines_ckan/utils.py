@@ -26,3 +26,11 @@ def make_ckan_request(url, method='GET', headers=None, api_key=None, **kwargs):
     except json.decoder.JSONDecodeError:
         log.error('Expected JSON in response from: {}'.format(url))
         raise
+
+
+def get_ckan_error(response):
+    '''Return the error from a ckan json response, or None.'''
+    ckan_error = None
+    if not response['success'] and response['error']:
+        ckan_error = response['error']
+    return ckan_error

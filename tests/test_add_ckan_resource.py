@@ -11,8 +11,7 @@ from datapackage_pipelines.utilities.lib_test_helpers import (
 import datapackage_pipelines_ckan.processors
 
 # mock the ckan resource response
-MOCK_CKAN_RESPONSE = \
-{
+MOCK_CKAN_RESPONSE = {
     'help': 'https://demo.ckan.org/api/3/action/help_show?name=resource_show',
     'success': True,
     'result': {
@@ -36,6 +35,22 @@ MOCK_CKAN_RESPONSE = \
         'id': 'd51c9bd4-8256-4289-bdd7-962f8572efb0',
         'resource_type': 'file',
         'size': '1080880'
+    }
+}
+
+MOCK_CKAN_NOT_FOUND = {
+    'success': False,
+    'error':  {
+        'message': 'Not found: Resource was not found.',
+        '__type': 'Not Found Error'
+    }
+}
+
+MOCK_CKAN_ERROR = {
+    'success': False,
+    'error': {
+        'message': 'Access denied: User  not authorized to read resource 0d8b3df4-4771-44bf-8c56-db9a12f1a64a',  # noqa
+        '__type': 'Authorization Error'
     }
 }
 
@@ -118,7 +133,7 @@ class TestAddCkanResourceProcessor(unittest.TestCase):
         assert request_history[0].headers['Authorization'] == 'my-api-key'
 
     @requests_mock.mock()
-    def test_add_ckan_resource_processor_invalid_response(self, mock_request):
+    def test_add_ckan_resource_processor_invalid_json(self, mock_request):
 
         mock_request.get('https://demo.ckan.org/api/3/action/resource_show',
                          text='nope')
@@ -141,5 +156,59 @@ class TestAddCkanResourceProcessor(unittest.TestCase):
 
         # Trigger the processor with our mock `ingest` will return an exception
         with self.assertRaises(json.decoder.JSONDecodeError):
+            spew_args, _ = mock_processor_test(processor_path,
+                                               (params, datapackage, []))
+
+    @requests_mock.mock()
+    def test_add_ckan_resource_processor_not_found(self, mock_request):
+
+        mock_request.get('https://demo.ckan.org/api/3/action/resource_show',
+                         json=MOCK_CKAN_NOT_FOUND)
+
+        # input arguments used by our mock `ingest`
+        datapackage = {
+            'name': 'my-datapackage',
+            'project': 'my-project',
+            'resources': []
+        }
+        params = {
+            'ckan-host': 'https://demo.ckan.org',
+            'resource-id': 'd51c9bd4-8256-4289-bdd7-962f8572efb0'
+        }
+
+        # Path to the processor we want to test
+        processor_dir = \
+            os.path.dirname(datapackage_pipelines_ckan.processors.__file__)
+        processor_path = os.path.join(processor_dir, 'add_ckan_resource.py')
+
+        # Trigger the processor with our mock `ingest` will return an exception
+        with self.assertRaises(Exception):
+            spew_args, _ = mock_processor_test(processor_path,
+                                               (params, datapackage, []))
+
+    @requests_mock.mock()
+    def test_add_ckan_resource_processor_misc_error(self, mock_request):
+
+        mock_request.get('https://demo.ckan.org/api/3/action/resource_show',
+                         json=MOCK_CKAN_ERROR)
+
+        # input arguments used by our mock `ingest`
+        datapackage = {
+            'name': 'my-datapackage',
+            'project': 'my-project',
+            'resources': []
+        }
+        params = {
+            'ckan-host': 'https://demo.ckan.org',
+            'resource-id': 'd51c9bd4-8256-4289-bdd7-962f8572efb0'
+        }
+
+        # Path to the processor we want to test
+        processor_dir = \
+            os.path.dirname(datapackage_pipelines_ckan.processors.__file__)
+        processor_path = os.path.join(processor_dir, 'add_ckan_resource.py')
+
+        # Trigger the processor with our mock `ingest` will return an exception
+        with self.assertRaises(Exception):
             spew_args, _ = mock_processor_test(processor_path,
                                                (params, datapackage, []))

@@ -197,7 +197,8 @@ class TestDumpToCkanProcessor(unittest.TestCase):
             'resources': [{
                 "dpp:streamedFrom": "https://example.com/file.csv",
                 "name": "resource_not_streamed",
-                "path": "."
+                "path": ".",
+                "format": "csv"
             }, {
                 "dpp:streamedFrom": "https://example.com/file_02.csv",
                 "name": "resource_not_streamed_02",

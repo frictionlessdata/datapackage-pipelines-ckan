@@ -6,7 +6,7 @@ import datapackage as datapackage_lib
 from ckan_datapackage_tools import converter
 from datapackage_pipelines.lib.dump.dumper_base import FileDumper, DumperBase
 
-from datapackage_pipelines_ckan.utils import make_ckan_request
+from datapackage_pipelines_ckan.utils import make_ckan_request, get_ckan_error
 
 import logging
 log = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ class CkanDumper(FileDumper):
                                      json=dataset,
                                      api_key=self.ckan_api_key)
 
-        ckan_error = self._get_ckan_error(response)
+        ckan_error = get_ckan_error(response)
         if ckan_error \
            and parameters.get('overwrite_existing') \
            and 'That URL is already in use.' in ckan_error.get('name', []):
@@ -133,7 +133,7 @@ class CkanDumper(FileDumper):
                                          method='POST',
                                          json=dataset,
                                          api_key=self.ckan_api_key)
-            ckan_error = self._get_ckan_error(response)
+            ckan_error = get_ckan_error(response)
 
         if ckan_error:
             log.exception('CKAN returned an error: ' + json.dumps(ckan_error))
@@ -204,18 +204,11 @@ class CkanDumper(FileDumper):
                                             method='POST',
                                             **request_params)
 
-        ckan_error = self._get_ckan_error(create_response)
+        ckan_error = get_ckan_error(create_response)
         if ckan_error:
             log.exception('CKAN returned an error when creating '
                           'a resource: ' + json.dumps(ckan_error))
             raise Exception
-
-    def _get_ckan_error(self, response):
-        '''Return the error from a ckan json response, or None.'''
-        ckan_error = None
-        if not response['success'] and response['error']:
-            ckan_error = response['error']
-        return ckan_error
 
 
 if __name__ == '__main__':

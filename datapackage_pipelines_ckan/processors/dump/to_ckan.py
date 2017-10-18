@@ -54,6 +54,8 @@ class CkanDumper(FileDumper):
                     'url': resource['dpp:streamedFrom'],
                     'name': resource['name'],
                 }
+                if 'format' in resource:
+                    resource_metadata.update({'format': resource['format']})
                 request_params = {
                     'json': resource_metadata
                 }
@@ -176,6 +178,8 @@ class CkanDumper(FileDumper):
         }
         if 'encoding' in spec:
             resource_metadata.update({'encoding': spec['encoding']})
+        if 'format' in spec:
+            resource_metadata.update({'format': spec['format']})
         ckan_filename = os.path.basename(spec['path'])
         resource_files = {
             'upload': (ckan_filename, open(temp_file.name, 'rb'))

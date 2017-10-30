@@ -19,7 +19,8 @@ PACKAGE = 'datapackage_pipelines_ckan'
 NAME = PACKAGE.replace('_', '-')
 INSTALL_REQUIRES = [
     'datapackage-pipelines>=1.0,<2.0',
-    'ckan-datapackage-tools'
+    'ckan-datapackage-tools',
+    'tableschema-ckan-datastore'
 ]
 TESTS_REQUIRE = [
     'pylama',
@@ -52,7 +53,7 @@ setup(
         'data', 'ckan'
     ],
     classifiers=[
-        'Development Status :: 5 - Alpha',
+        'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',

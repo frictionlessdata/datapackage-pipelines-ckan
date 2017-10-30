@@ -59,7 +59,7 @@ example-dump-to-ckan:
       parameters:
         ckan-host: https://demo.ckan.org
         ckan-api-key: env:CKAN_API_KEY
-        push_resources_to_datastore: false
+        push_resources_to_datastore: true
         overwrite_existing: true
         dataset-properties:
           name: test-dataset-010203

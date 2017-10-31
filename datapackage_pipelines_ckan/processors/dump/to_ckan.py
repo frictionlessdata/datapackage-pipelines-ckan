@@ -20,7 +20,7 @@ class CkanDumper(FileDumper):
         super(CkanDumper, self).initialize(parameters)
 
         base_path = "/api/3/action"
-        self.__base_url = parameters['ckan-host']
+        self.__base_url = parameters['ckan-host'].rstrip('/')
         self.__base_endpoint = self.__base_url + base_path
 
         self.__ckan_api_key = parameters.get('ckan-api-key')

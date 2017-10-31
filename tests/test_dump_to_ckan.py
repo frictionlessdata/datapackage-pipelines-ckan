@@ -497,3 +497,54 @@ class TestDumpToCkanProcessor(unittest.TestCase):
         assert requests[4].url.startswith(datastore_search_url)
         assert requests[5].url == datastore_create_url
         assert requests[6].url == datastore_upsert_url
+
+    @requests_mock.mock()
+    def test_dump_to_ckan_package_create_streaming_resource_datastore_method_invalid(self, mock_request):  # noqa
+        '''Create package with streaming resource, and pushing to datastore,
+        with an invalid method.'''
+
+        # input arguments used by our mock `ingest`
+        datapackage = {
+            'name': 'my-datapackage',
+            'project': 'my-project',
+            'resources': [{
+                "dpp:streamedFrom": "https://example.com/file.csv",
+                "dpp:streaming": True,
+                "name": "resource_streamed.csv",
+                "path": "data/file.csv",
+                'schema': {'fields': [
+                    {'name': 'first', 'type': 'string'},
+                    {'name': 'last', 'type': 'string'}
+                ]}
+            }, {
+                "dpp:streamedFrom": "https://example.com/file_02.csv",
+                "name": "resource_not_streamed.csv",
+                "path": "."
+            }]
+        }
+        params = {
+            'ckan-host': 'https://demo.ckan.org',
+            'ckan-api-key': 'my-api-key',
+            'overwrite_existing': True,
+            'force-format': True,
+            'push_resources_to_datastore': True,
+            'push_resources_to_datastore_method': 'invalid'
+        }
+
+        # Path to the processor we want to test
+        processor_dir = \
+            os.path.dirname(datapackage_pipelines_ckan.processors.__file__)
+        processor_path = os.path.join(processor_dir, 'dump/to_ckan.py')
+
+        # Trigger the processor with our mock `ingest` and capture what it will
+        # returned to `spew`.
+        json_file = {'first': 'Fred', 'last': 'Smith'}
+        json_file = json.dumps(json_file)
+        with self.assertRaises(RuntimeError):
+            spew_args, _ = mock_dump_test(
+                processor_path,
+                (params, datapackage,
+                 iter([ResourceIterator(io.StringIO(json_file),
+                                        datapackage['resources'][0],
+                                        {'schema': {'fields': []}})
+                       ])))

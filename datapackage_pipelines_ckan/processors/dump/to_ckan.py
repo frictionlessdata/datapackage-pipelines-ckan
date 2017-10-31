@@ -28,6 +28,13 @@ class CkanDumper(FileDumper):
         self.__dataset_id = None
         self.__push_to_datastore = \
             parameters.get('push_resources_to_datastore', False)
+        self.__push_to_datastore_method = \
+            parameters.get('push_resources_to_datastore_method', 'insert')
+        if self.__push_to_datastore_method \
+           not in ['insert', 'upsert', 'update']:
+            raise RuntimeError(
+                'push_resources_to_datastore_method must be one of '
+                '\'insert\', \'upsert\' or \'update\'.')
 
     def handle_resources(self, datapackage,
                          resource_iterator,
@@ -205,7 +212,7 @@ class CkanDumper(FileDumper):
                 storage.create(resource_id, spec['schema'])
                 storage.write(resource_id,
                               Stream(temp_file.name, format='csv').open(),
-                              method='insert')
+                              method=self.__push_to_datastore_method)
         except Exception as e:
             raise e
         finally:

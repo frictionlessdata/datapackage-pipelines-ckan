@@ -61,6 +61,7 @@ A processor to save a datapackage and resources to a specified CKAN instance.
 - `ckan-api-key`: Either a CKAN user api key or, if in the format `env:CKAN_API_KEY_NAME`, an env var that defines an api key.
 - `overwrite_existing`: If `true`, if the CKAN dataset already exists, it will be overwritten by the datapackage. Optional, and default is `false`.
 - `push_resources_to_datastore`: If `true`, newly created resources will be pushed the CKAN DataStore. Optional, and default is `false`.
+- `push_resources_to_datastore_method`: Value is a string, one of 'upsert', 'insert' or 'update'. This will be the method used to add data to the DataStore (see https://ckan.readthedocs.io/en/latest/maintaining/datastore.html#ckanext.datastore.logic.action.datastore_upsert). Optional, the default is 'insert'.
 - `dataset-properties`: An optional object, the properties of which will be used to set properties of the CKAN dataset.
 
 ##### CKAN dataset from datapackage

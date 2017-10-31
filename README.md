@@ -49,6 +49,7 @@ A processor to save a datapackage and resources to a specified CKAN instance.
     ckan-host: http://demo.ckan.org
     ckan-api-key: env:CKAN_API_KEY
     overwrite_existing: true
+    push_resources_to_datastore: true
     dataset-properties:
       name: test-dataset-010203
       state: draft
@@ -59,6 +60,8 @@ A processor to save a datapackage and resources to a specified CKAN instance.
 - `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org).
 - `ckan-api-key`: Either a CKAN user api key or, if in the format `env:CKAN_API_KEY_NAME`, an env var that defines an api key.
 - `overwrite_existing`: If `true`, if the CKAN dataset already exists, it will be overwritten by the datapackage. Optional, and default is `false`.
+- `push_resources_to_datastore`: If `true`, newly created resources will be pushed the CKAN DataStore. Optional, and default is `false`.
+- `push_resources_to_datastore_method`: Value is a string, one of 'upsert', 'insert' or 'update'. This will be the method used to add data to the DataStore (see https://ckan.readthedocs.io/en/latest/maintaining/datastore.html#ckanext.datastore.logic.action.datastore_upsert). Optional, the default is 'insert'.
 - `dataset-properties`: An optional object, the properties of which will be used to set properties of the CKAN dataset.
 
 ##### CKAN dataset from datapackage
@@ -68,3 +71,5 @@ The processor first creates a CKAN dataset from the datapackage specification, u
 ##### CKAN resources from datapackage resources
 
 If the CKAN dataset was successfully created or updated, the dataset resources will be created for each resource in the datapackage, using [`resource_create`](http://docs.ckan.org/en/latest/api/#ckan.logic.action.create.resource_create). If datapackage resource are marked for streaming (they have the `dpp:streamed=True` property), resource files will be uploaded to the CKAN filestore. For example, remote resources may be marked for streaming by the inclusion of the `stream_remote_resources` processor earlier in the pipeline.
+
+Additionally, if `push_resources_to_datastore` is `True`, the processor will push resources marked for streaming to the CKAN DataStore using [`datastore_create`](https://ckan.readthedocs.io/en/latest/maintaining/datastore.html#ckanext.datastore.logic.action.datastore_create) and [`datastore_upsert`](https://ckan.readthedocs.io/en/latest/maintaining/datastore.html#ckanext.datastore.logic.action.datastore_upsert).

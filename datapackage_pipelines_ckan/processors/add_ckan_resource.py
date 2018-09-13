@@ -6,14 +6,14 @@ from datapackage_pipelines.utilities.resources import (
 from datapackage_pipelines.generators import slugify
 from datapackage_pipelines.wrapper import ingest, spew
 
-from datapackage_pipelines_ckan.utils import make_ckan_request, get_ckan_error
+from datapackage_pipelines_ckan.utils import make_ckan_request, get_ckan_error, get_env_param
 
 import logging
 log = logging.getLogger(__name__)
 
 parameters, datapackage, res_iter = ingest()
 
-ckan_host = parameters.pop('ckan-host')
+ckan_host = get_env_param(parameters.pop('ckan-host'))
 ckan_api_key = parameters.pop('ckan-api-key', None)
 resource_id = parameters.pop('resource-id')
 resource_show_url = '{ckan_host}/api/3/action/resource_show'.format(

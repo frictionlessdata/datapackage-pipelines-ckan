@@ -3,6 +3,7 @@ import io
 import json
 import os
 import unittest
+import cgi
 
 import requests_mock
 import mock
@@ -548,3 +549,105 @@ class TestDumpToCkanProcessor(unittest.TestCase):
                                         datapackage['resources'][0],
                                         {'schema': {'fields': []}})
                        ])))
+
+    @requests_mock.mock()
+    def test_dump_to_ckan_multiple_datasets(self, mock_request):  # noqa
+        '''Create multiple datasets.'''
+
+        base_url = 'https://demo.ckan.org/api/3/action/'
+        package_create_url = '{}package_create'.format(base_url)
+        resource_create_url = '{}resource_create'.format(base_url)
+
+        mock_request.post(package_create_url,
+                          [{'json':{'success': True, 'result': {'id': id}}}
+                            for id in ['package-1', 'package-2']])
+        mock_request.post(resource_create_url,
+                          json={
+                            'success': True,
+                            'result': {'id': 'ckan-resource-id'}})
+
+        # input arguments used by our mock `ingest`
+        datapackage = {
+            'name': 'my-datapackage',
+            'project': 'my-project',
+            'resources': [{
+                "name": "package-1",
+                "dataset-properties": {
+                    "name": "package-1",
+                    "owner_org": "my-org"
+                },
+            }, {
+                "name": "package-2",
+                "dataset-properties": {
+                    "name": "package-2",
+                    "owner_org": "my-org"
+                },
+            }, {
+                "dpp:streamedFrom": "https://example.com/file.csv",
+                "name": "resource_not_streamed",
+                "path": ".",
+                "format": "csv",
+                "dataset-name": "package-1"
+            }, {
+                "dpp:streamedFrom": "https://example.com/file_02.csv",
+                "name": "resource_not_streamed_02",
+                "path": ".",
+                "dataset-name": "package-2"
+            },{
+                "dpp:streamedFrom": "https://example.com/file.csv",
+                "dpp:streaming": True,
+                "name": "resource_streamed.csv",
+                "path": "data/file.csv",
+                'schema': {'fields': [
+                    {'name': 'first', 'type': 'string'},
+                    {'name': 'last', 'type': 'string'}
+                ]},
+                "dataset-name": "package-1"
+            }]
+        }
+        params = {
+            'ckan-host': 'https://demo.ckan.org',
+            'ckan-api-key': 'my-api-key',
+            'overwrite_existing': True,
+            'force-format': True
+        }
+
+        # Path to the processor we want to test
+        processor_dir = \
+            os.path.dirname(datapackage_pipelines_ckan.processors.__file__)
+        processor_path = os.path.join(processor_dir, 'dump/to_ckan.py')
+
+        # Trigger the processor with our mock `ingest` and capture what it will
+        # returned to `spew`.
+
+        json_file = {'first': 'Fred', 'last': 'Smith'}
+        json_file = json.dumps(json_file)
+        spew_args, _ = mock_dump_test(
+            processor_path,
+            (params, datapackage,
+             iter([ResourceIterator(io.StringIO(json_file),
+                                    datapackage['resources'][4],
+                                    {'schema': {'fields': []}})
+                   ])))
+
+        spew_res_iter = spew_args[1]
+        for r in spew_res_iter:
+            list(r)  # iterate the row to yield it
+
+        requests = mock_request.request_history
+        assert len(requests) == 5
+        assert requests[0].url == package_create_url
+        assert requests[0].json()['name'] == 'package-1'
+        assert requests[1].url == package_create_url
+        assert requests[1].json()['name'] == 'package-2'
+        assert requests[2].url == resource_create_url
+        assert requests[2].json()['name'] == 'resource_not_streamed'
+        assert requests[2].json()['package_id'] == 'package-1'
+        assert requests[3].url == resource_create_url
+        assert requests[3].json()['name'] == 'resource_not_streamed_02'
+        assert requests[3].json()['package_id'] == 'package-2'
+        assert requests[4].url == resource_create_url
+        with io.BytesIO(requests[4].text.encode()) as f:
+            data = cgi.parse_multipart(f, {'boundary': requests[4].headers['Content-Type'].split('boundary=')[1].encode()})
+        assert data['name'] == [b'resource_streamed.csv']
+        assert data['package_id'] == [b'package-1']

@@ -34,3 +34,10 @@ def get_ckan_error(response):
     if not response['success'] and response['error']:
         ckan_error = response['error']
     return ckan_error
+
+
+def get_env_param(value):
+    if value:
+        if value.startswith('env:'):
+            value = os.environ.get(value[4:])
+    return value

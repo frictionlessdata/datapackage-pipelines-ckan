@@ -57,7 +57,7 @@ A processor to save a datapackage and resources to a specified CKAN instance.
       owner_org: my-test-org
 ```
 
-- `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org).
+- `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org) or a value in the format `env:CKAN_HOST` that defines the host.
 - `ckan-api-key`: Either a CKAN user api key or, if in the format `env:CKAN_API_KEY_NAME`, an env var that defines an api key.
 - `overwrite_existing`: If `true`, if the CKAN dataset already exists, it will be overwritten by the datapackage. Optional, and default is `false`.
 - `push_resources_to_datastore`: If `true`, newly created resources will be pushed the CKAN DataStore. Optional, and default is `false`.
@@ -73,3 +73,30 @@ The processor first creates a CKAN dataset from the datapackage specification, u
 If the CKAN dataset was successfully created or updated, the dataset resources will be created for each resource in the datapackage, using [`resource_create`](http://docs.ckan.org/en/latest/api/#ckan.logic.action.create.resource_create). If datapackage resource are marked for streaming (they have the `dpp:streamed=True` property), resource files will be uploaded to the CKAN filestore. For example, remote resources may be marked for streaming by the inclusion of the `stream_remote_resources` processor earlier in the pipeline.
 
 Additionally, if `push_resources_to_datastore` is `True`, the processor will push resources marked for streaming to the CKAN DataStore using [`datastore_create`](https://ckan.readthedocs.io/en/latest/maintaining/datastore.html#ckanext.datastore.logic.action.datastore_create) and [`datastore_upsert`](https://ckan.readthedocs.io/en/latest/maintaining/datastore.html#ckanext.datastore.logic.action.datastore_upsert).
+
+##### Support for creating multiple datasets
+
+To create multiple datasets with variable properties, create additional (non tabular) resources in the datapackage for each
+Dataset. The resource descriptor for these resources should contain the following attributes:
+
+```json
+{
+    "dataset-properties": {
+        "name": "test-dataset-010203",
+        "state": "draft",
+        "owner_org": "my-org"
+    }
+}
+```
+
+The `name` attribute of dataset-properties is required, additional properties will override `dataset-properties` from the parameters.
+
+The resources containing the data should have an additional attribute in their descriptor to match to the relevant dataset:
+
+```json
+{
+    "dataset-name": "test-dataset-010203"
+}
+```
+
+This is used to relate each resource to the relevant dataset.

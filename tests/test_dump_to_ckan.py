@@ -609,7 +609,8 @@ class TestDumpToCkanProcessor(unittest.TestCase):
             'ckan-host': 'https://demo.ckan.org',
             'ckan-api-key': 'my-api-key',
             'overwrite_existing': True,
-            'force-format': True
+            'force-format': True,
+            'ckan-log-resource': 'ckan-log'
         }
 
         # Path to the processor we want to test

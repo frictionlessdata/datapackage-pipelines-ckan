@@ -11,46 +11,61 @@ from datapackage_pipelines_ckan.utils import make_ckan_request, get_ckan_error, 
 import logging
 log = logging.getLogger(__name__)
 
-parameters, datapackage, res_iter = ingest()
 
-ckan_host = get_env_param(parameters.pop('ckan-host'))
-ckan_api_key = parameters.pop('ckan-api-key', None)
-resource_id = parameters.pop('resource-id')
-resource_show_url = '{ckan_host}/api/3/action/resource_show'.format(
-                    ckan_host=ckan_host)
+class AddCkanResource(object):
 
-response = make_ckan_request(resource_show_url,
-                             params=dict(id=resource_id),
-                             api_key=ckan_api_key)
+    def get_parameters(self, parameters):
+        self.parameters = parameters
+        self.ckan_host = get_env_param(parameters.pop('ckan-host'))
+        self.ckan_api_key = parameters.pop('ckan-api-key', None)
+        self.resource_id = parameters.pop('resource-id')
 
-ckan_error = get_ckan_error(response)
-if ckan_error:
-    if 'Not found: Resource was not found.' in ckan_error.get('message', []):
-        log.exception('CKAN resource {} was not found.'.format(resource_id))
-    else:
-        log.exception('CKAN returned an error: ' + json.dumps(ckan_error))
+    def get_resource_show_url(self):
+        return '{ckan_host}/api/3/action/resource_show'.format(ckan_host=self.ckan_host)
 
-    raise Exception
+    def get_ckan_resource(self, resource_show_url):
+        response = make_ckan_request(resource_show_url,
+                                     params=dict(id=self.resource_id),
+                                     api_key=self.ckan_api_key)
 
-resource = response['result']
+        ckan_error = get_ckan_error(response)
+        if ckan_error:
+            if 'Not found: Resource was not found.' in ckan_error.get('message', []):
+                log.exception('CKAN resource {} was not found.'.format(self.resource_id))
+            else:
+                log.exception('CKAN returned an error: ' + json.dumps(ckan_error))
 
-if 'name' in resource:
-    if 'title' not in resource:
-        resource['title'] = resource['name']
-    resource['name'] = slugify(resource['name']).lower()
+            raise Exception
 
-if 'format' in resource:
-    resource['format'] = resource['format'].lower()
+        return response['result']
 
-if 'url' in resource:
-    resource['path'] = PATH_PLACEHOLDER
-    resource[PROP_STREAMED_FROM] = resource['url']
-    del resource['url']
+    def update_ckan_resource(self, resource):
+        if 'name' in resource:
+            if 'title' not in resource:
+                resource['title'] = resource['name']
+            resource['name'] = slugify(resource['name']).lower()
 
-del resource['hash']
+        if 'format' in resource:
+            resource['format'] = resource['format'].lower()
 
-resource.update(parameters)
+        if 'url' in resource:
+            resource['path'] = PATH_PLACEHOLDER
+            resource[PROP_STREAMED_FROM] = resource['url']
+            del resource['url']
 
-datapackage['resources'].append(resource)
+        del resource['hash']
 
-spew(datapackage, res_iter)
+        resource.update(self.parameters)
+
+    def __call__(self, *args, **kwargs):
+        parameters, datapackage, res_iter = ingest()
+        self.get_parameters(parameters)
+        resource_show_url = self.get_resource_show_url()
+        resource = self.get_ckan_resource(resource_show_url)
+        self.update_ckan_resource(resource)
+        datapackage['resources'].append(resource)
+        spew(datapackage, res_iter)
+
+
+if __name__ == '__main__':
+    AddCkanResource()()

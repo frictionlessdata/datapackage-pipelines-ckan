@@ -73,5 +73,5 @@ class AddCkanResource(object):
         spew(datapackage, res_iter)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__' or spew.__class__.__name__ == 'MagicMock':
     AddCkanResource()()

@@ -10,7 +10,9 @@ from datapackage_pipelines.utilities.resources import is_a_url
 
 from tableschema_ckan_datastore import Storage
 
-from datapackage_pipelines_ckan.utils import make_ckan_request, get_ckan_error, get_env_param
+from datapackage_pipelines_ckan.utils import (
+    make_ckan_request, get_ckan_error, get_env_param
+)
 
 import logging
 log = logging.getLogger(__name__)
@@ -42,18 +44,24 @@ class CkanDumper(FileDumper):
                 '\'insert\', \'upsert\' or \'update\'.')
 
     def prepare_datapackage(self, datapackage, params):
-        datapackage = super(CkanDumper, self).prepare_datapackage(datapackage, params)
+        datapackage = super(CkanDumper, self).prepare_datapackage(
+            datapackage, params
+        )
         if self.__ckan_log_resource:
-            datapackage['resources'].append({'dpp:streaming': True,
-                                             'name': self.__ckan_log_resource,
-                                             'path': self.__ckan_log_resource + '.csv',
-                                             'schema': {'fields': [{'name': 'dataset_id', 'type': 'string'},
-                                                                   {'name': 'dataset_name', 'type': 'string'},
-                                                                   {'name': 'resource_id', 'type': 'string'},
-                                                                   {'name': 'resource_name', 'type': 'string'},
-                                                                   {'name': 'resource_url', 'type': 'string'},
-                                                                   {'name': 'resource_file', 'type': 'string'},
-                                                                   {'name': 'error', 'type': 'string'}]}})
+            datapackage['resources'].append({
+                'dpp:streaming': True,
+                'name': self.__ckan_log_resource,
+                'path': self.__ckan_log_resource + '.csv',
+                'schema': {'fields': [
+                    {'name': 'dataset_id', 'type': 'string'},
+                    {'name': 'dataset_name', 'type': 'string'},
+                    {'name': 'resource_id', 'type': 'string'},
+                    {'name': 'resource_name', 'type': 'string'},
+                    {'name': 'resource_url', 'type': 'string'},
+                    {'name': 'resource_file', 'type': 'string'},
+                    {'name': 'error', 'type': 'string'}]
+                }
+            })
         return datapackage
 
     def get_resource_dataset_id(self, resource):
@@ -92,31 +100,44 @@ class CkanDumper(FileDumper):
         for resource in datapackage['resources']:
             if not resource.get('dpp:streaming', False):
                 dataset_id = self.get_resource_dataset_id(resource)
-                ckan_log_row = {'dataset_id': dataset_id, 'dataset_name': resource.get('dataset-name'),
-                                'resource_name': resource.get('name'),}
+                ckan_log_row = {'dataset_id': dataset_id,
+                                'dataset_name': resource.get('dataset-name'),
+                                'resource_name': resource.get('name')}
                 if dataset_id:
                     resource_metadata = {
                         'package_id': dataset_id,
-                        'name': resource.get('dataset-resource-name', resource['name']),
+                        'name': resource.get('dataset-resource-name',
+                                             resource['name']),
                     }
                     if 'format' in resource:
-                        resource_metadata.update({'format': resource['format']})
+                        resource_metadata.update({
+                            'format': resource['format']
+                        })
                     streamed_from = resource['dpp:streamedFrom']
                     if is_a_url(streamed_from):
                         resource_metadata['url'] = streamed_from
                         request_params = {
                             'json': resource_metadata,
                         }
-                        ckan_log_row.update(resource_file=None, resource_url=streamed_from)
+                        ckan_log_row.update(resource_file=None,
+                                            resource_url=streamed_from)
                     else:
                         resource_metadata.update(url='url', url_type='upload')
-                        request_params = {'data': resource_metadata,
-                                          'files': {'upload': (streamed_from, open(streamed_from, 'rb'))}}
-                        ckan_log_row.update(resource_file=streamed_from, resource_url=None)
+                        request_params = {
+                            'data': resource_metadata,
+                            'files': {
+                                'upload': (streamed_from,
+                                           open(streamed_from, 'rb'))
+                            }
+                        }
+                        ckan_log_row.update(resource_file=streamed_from,
+                                            resource_url=None)
                     self._create_ckan_resource(request_params, ckan_log_row)
                 else:
-                    self.__ckan_log.append(dict(ckan_log_row, resource_id=None, resource_url=None,
-                                                resource_file=None, error='no related dataset_id'))
+                    self.__ckan_log.append(dict(
+                        ckan_log_row, resource_id=None, resource_url=None,
+                        resource_file=None, error='no related dataset_id')
+                    )
 
         # Handle each resource in resource_iterator
         for resource in resource_iterator:
@@ -138,7 +159,9 @@ class CkanDumper(FileDumper):
         stats['hash'] = DumperBase.get_attr(datapackage, self.datapackage_hash)
         stats['dataset_name'] = datapackage['name']
 
-    def handle_dataset(self, parameters, datapackage=None, dataset_properties=None): # core dataset properties
+    def handle_dataset(self, parameters, datapackage=None,
+                       dataset_properties=None):
+        # core dataset properties
         dataset = {
             'title': '',
             'version': '',
@@ -193,35 +216,44 @@ class CkanDumper(FileDumper):
                                          api_key=self.__ckan_api_key)
             ckan_error = get_ckan_error(response)
 
-        ckan_log_row = {'dataset_name': dataset['name'], 'resource_id': None, 'resource_name': None,
+        ckan_log_row = {'dataset_name': dataset['name'],
+                        'resource_id': None, 'resource_name': None,
                         'resource_url': None, 'resource_file': None}
 
         if ckan_error or not response['success']:
-            self.__ckan_log.append(dict(ckan_log_row, dataset_id=None, error=json.dumps(ckan_error)))
+            self.__ckan_log.append(dict(
+                ckan_log_row, dataset_id=None, error=json.dumps(ckan_error))
+            )
             if self.__ckan_log_resource:
                 return None
             else:
-                log.exception('CKAN returned an error: ' + json.dumps(ckan_error))
+                log.exception('CKAN returned an error: '
+                              '' + json.dumps(ckan_error))
                 raise Exception
 
         dataset_id = response['result']['id']
-        self.__ckan_log.append(dict(ckan_log_row, dataset_id=dataset_id, error=None))
+        self.__ckan_log.append(dict(
+            ckan_log_row, dataset_id=dataset_id, error=None)
+        )
         return dataset_id
 
     def handle_datapackage(self, datapackage, parameters, stats):
         '''Create or update ckan dataset/s from datapackage and parameters'''
 
-        datasets = [descriptor['dataset-properties'] for descriptor in datapackage['resources']
-                    if descriptor.get('dataset-properties', {}).get('name')]
+        datasets = [descriptor['dataset-properties']
+                    for descriptor in datapackage['resources']
+                    if descriptor.get('dataset-properties',
+                                      {}).get('name')]
         if len(datasets) > 0:
             for dataset in datasets:
-                self.__dataset_ids[dataset['name']] = self.handle_dataset(parameters, dataset_properties=dataset)
+                self.__dataset_ids[dataset['name']] = self.handle_dataset(
+                    parameters, dataset_properties=dataset
+                )
         else:
             self.__dataset_id = self.handle_dataset(parameters, datapackage)
 
-
-    def rows_processor(self, resource, spec, temp_file, writer, fields,
-                       datapackage):
+    def rows_processor(self, resource, spec, temp_file,
+                       writer, fields, datapackage):
         file_formatter = self.file_formatters[spec['name']]
         for row in resource:
             file_formatter.write_row(writer, row, fields)
@@ -248,8 +280,9 @@ class CkanDumper(FileDumper):
         temp_file.close()
 
         dataset_id = self.get_resource_dataset_id(spec)
-        ckan_log_row = {'dataset_id': dataset_id, 'dataset_name': spec.get('dataset-name'),
-                        'resource_name': spec.get('name'),}
+        ckan_log_row = {'dataset_id': dataset_id,
+                        'dataset_name': spec.get('dataset-name'),
+                        'resource_name': spec.get('name')}
         if dataset_id:
             resource_metadata = {
                 'package_id': dataset_id,
@@ -273,7 +306,8 @@ class CkanDumper(FileDumper):
             }
             try:
                 # Create the CKAN resource
-                create_result = self._create_ckan_resource(request_params, ckan_log_row)
+                create_result = self._create_ckan_resource(request_params,
+                                                           ckan_log_row)
                 if self.__push_to_datastore and create_result:
                     # Create the DataStore resource
                     storage = Storage(base_url=self.__base_url,
@@ -286,14 +320,18 @@ class CkanDumper(FileDumper):
                                   method=self.__push_to_datastore_method)
             except Exception as e:
                 if self.__ckan_log_resource:
-                    self.__ckan_log.append(dict(ckan_log_row, resource_id=None, error=str(e)))
+                    self.__ckan_log.append(
+                        dict(ckan_log_row, resource_id=None, error=str(e))
+                    )
                 else:
                     raise e
             finally:
                 os.unlink(filename)
         else:
-            self.__ckan_log.append(dict(ckan_log_row, resource_id=None, resource_url=None,
-                                        resource_file=None, error='no related dataset_id'))
+            self.__ckan_log.append(dict(
+                ckan_log_row, resource_id=None, resource_url=None,
+                resource_file=None, error='no related dataset_id')
+            )
             os.unlink(filename)
 
     def _create_ckan_resource(self, request_params, ckan_log_row):
@@ -315,7 +353,10 @@ class CkanDumper(FileDumper):
                               'a resource: ' + json.dumps(ckan_error))
                 raise Exception
 
-        self.__ckan_log.append(dict(ckan_log_row, resource_id=create_response['result']['id'], error=None))
+        self.__ckan_log.append(dict(
+            ckan_log_row, resource_id=create_response['result']['id'],
+            error=None)
+        )
         return create_response['result']
 
 

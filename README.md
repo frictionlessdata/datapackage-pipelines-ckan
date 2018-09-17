@@ -35,13 +35,13 @@ A processor to retrieve metadata about a CKAN resource from a CKAN instance and 
     ckan-api-key: env:CKAN_API_KEY  # an env var defining a ckan user api key
 ```
 
-- `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org).
+- `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org) or a value in the format `env:CKAN_HOST` that defines the host.
 - `resource-id`: The id of CKAN resource
 - `ckan-api-key`: Either a CKAN user api key or, if in the format `env:CKAN_API_KEY_NAME`, an env var that defines an api key. Optional, but necessary for private datasets.
 
 ### `ckan.dump.to_ckan`
 
-A processor to save a datapackage and resources to a specified CKAN instance.
+A processor to save datapackages and resources to a specified CKAN instance.
 
 ```yaml
   run: ckan.dump.to_ckan
@@ -57,7 +57,7 @@ A processor to save a datapackage and resources to a specified CKAN instance.
       owner_org: my-test-org
 ```
 
-- `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org).
+- `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org) or a value in the format `env:CKAN_HOST` that defines the host.
 - `ckan-api-key`: Either a CKAN user api key or, if in the format `env:CKAN_API_KEY_NAME`, an env var that defines an api key.
 - `overwrite_existing`: If `true`, if the CKAN dataset already exists, it will be overwritten by the datapackage. Optional, and default is `false`.
 - `push_resources_to_datastore`: If `true`, newly created resources will be pushed the CKAN DataStore. Optional, and default is `false`.
@@ -73,3 +73,53 @@ The processor first creates a CKAN dataset from the datapackage specification, u
 If the CKAN dataset was successfully created or updated, the dataset resources will be created for each resource in the datapackage, using [`resource_create`](http://docs.ckan.org/en/latest/api/#ckan.logic.action.create.resource_create). If datapackage resource are marked for streaming (they have the `dpp:streamed=True` property), resource files will be uploaded to the CKAN filestore. For example, remote resources may be marked for streaming by the inclusion of the `stream_remote_resources` processor earlier in the pipeline.
 
 Additionally, if `push_resources_to_datastore` is `True`, the processor will push resources marked for streaming to the CKAN DataStore using [`datastore_create`](https://ckan.readthedocs.io/en/latest/maintaining/datastore.html#ckanext.datastore.logic.action.datastore_create) and [`datastore_upsert`](https://ckan.readthedocs.io/en/latest/maintaining/datastore.html#ckanext.datastore.logic.action.datastore_upsert).
+
+Non streaming resources can also be uploaded, based on the value of `dpp:streamedFrom` resource attribute. If the
+value contains the path to a file, it will be uploaded to CKAN.
+
+If you need to use unicode or special characters in the resource name you can specify the name in
+the `dataset-resource-name` attribute which will be used for the created CKAN resource name rather
+then the default `name` attribute which is more limited by the schema.
+
+##### Support for creating multiple datasets
+
+To create multiple datasets with variable properties, create additional (non tabular) resources in the datapackage for each
+Dataset. The resource descriptor for these resources should contain the following attributes:
+
+```json
+{
+    "name": "ckan-dataset-1",
+    "dataset-properties": {
+        "name": "test-dataset-010203",
+        "state": "draft",
+        "owner_org": "my-org"
+    },
+    "data": {}
+}
+```
+
+The `name` attribute of dataset-properties is required, additional properties will override `dataset-properties` from the parameters.
+
+The resources containing the data should have an additional attribute in their descriptor to match to the relevant dataset:
+
+```json
+{
+    "dataset-name": "test-dataset-010203"
+}
+```
+
+This is used to relate each resource to the relevant dataset.
+
+##### Handling errors
+
+By default the dump.to_ckan processor raises Exceptions in case of errors. If instead you want to react on
+the action log and handle errors differently, set the `ckan-log-resource` parameter:
+
+```yaml
+  run: ckan.dump.to_ckan
+  parameters:
+    ckan-log-resource: ckan-log
+```
+
+Next processors in the pipeline will be able to process the `ckan-log` resource containing details of actions
+performed and errors encountered by the dump.to_ckan processor.

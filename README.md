@@ -35,7 +35,7 @@ A processor to retrieve metadata about a CKAN resource from a CKAN instance and 
     ckan-api-key: env:CKAN_API_KEY  # an env var defining a ckan user api key
 ```
 
-- `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org).
+- `ckan-host`: The base url (and scheme) for the CKAN instance (e.g. http://demo.ckan.org) or a value in the format `env:CKAN_HOST` that defines the host.
 - `resource-id`: The id of CKAN resource
 - `ckan-api-key`: Either a CKAN user api key or, if in the format `env:CKAN_API_KEY_NAME`, an env var that defines an api key. Optional, but necessary for private datasets.
 

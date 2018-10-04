@@ -30,6 +30,8 @@ class CkanDumper(FileDumper):
             parameters.get('push_resources_to_datastore', False)
         self.__push_to_datastore_method = \
             parameters.get('push_resources_to_datastore_method', 'insert')
+        self.__stream_resource_headers = parameters.get('stream-resource-headers')
+        self.__resource_exists_error_message = parameters.get('resource-exists-error-message')
         if self.__push_to_datastore_method \
            not in ['insert', 'upsert', 'update']:
             raise RuntimeError(
@@ -134,7 +136,9 @@ class CkanDumper(FileDumper):
         ckan_error = get_ckan_error(response)
         if ckan_error \
            and parameters.get('overwrite_existing') \
-           and 'That URL is already in use.' in ckan_error.get('name', []):
+           and ('That URL is already in use.' in ckan_error.get('name', [])
+                or (self.__resource_exists_error_message
+                    and self.__resource_exists_error_message in ckan_error.get('name', []))):
 
             package_update_url = \
                 '{}/package_update'.format(self.__base_endpoint)
@@ -211,7 +215,8 @@ class CkanDumper(FileDumper):
                 resource_id = create_result['id']
                 storage.create(resource_id, spec['schema'])
                 storage.write(resource_id,
-                              Stream(temp_file.name, format='csv').open(),
+                              Stream(temp_file.name, format='csv',
+                                     headers=self.__stream_resource_headers).open(),
                               method=self.__push_to_datastore_method)
         except Exception as e:
             raise e
